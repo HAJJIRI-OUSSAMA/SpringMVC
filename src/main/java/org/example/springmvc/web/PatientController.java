@@ -1,5 +1,6 @@
 package org.example.springmvc.web;
 
+import jakarta.validation.*;
 import lombok.*;
 import org.example.springmvc.entities.*;
 import org.example.springmvc.repository.*;
@@ -7,6 +8,7 @@ import org.springframework.beans.factory.annotation.*;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.*;
 import org.springframework.ui.Model;
+import org.springframework.validation.*;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -38,6 +40,37 @@ public class PatientController {
     @GetMapping("/")
     public String home(){
         return "redirect:/index";
+    }
+
+    @GetMapping("/formPatients")
+    public String formPatients(Model model){
+        model.addAttribute("patient", new Patient());
+        return "formPatients";
+    }
+    @GetMapping("/patients")
+    @ResponseBody
+    public List<Patient> listPatients(){
+        return patientRepository.findAll();
+    }
+
+
+    @GetMapping("/editPatient")
+    public String editPatient(Model model, Long id, String keyword, int page){
+        Patient patient = patientRepository.findById(id).orElse(null);
+        if(patient==null) throw new RuntimeException("Patient introuvable");
+        model.addAttribute("patient", patient);
+        model.addAttribute("page", page);
+        model.addAttribute("keyword", keyword);
+        return "editPatients";
+    }
+
+    @PostMapping("/save")
+    public String save(Model model, @Valid Patient patient, BindingResult bindingResult,
+                       @RequestParam(defaultValue = "0") int page,
+                       @RequestParam(defaultValue = "") String keyword){
+        if(bindingResult.hasErrors()) return "formPatients";
+        patientRepository.save(patient);
+        return "redirect:/index?page="+page+"&keyword="+keyword;
     }
 
 }
